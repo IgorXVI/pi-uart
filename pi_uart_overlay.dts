@@ -5,8 +5,8 @@
     fragment@0 {
         target=<&uart1>;
         __overlay__ {
-            echodev {
-                compatible="brightlight,echodev";
+            piuartdev {
+                compatible="brightlight,piuartdev";
                 status="okay";
             };
         };
