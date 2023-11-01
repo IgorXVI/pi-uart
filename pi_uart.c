@@ -21,7 +21,7 @@ static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t co
 	printk("pi_uart - file /proc/pi-uart-data - read was called!\n");
 
 	if (*offset >= global_buffer_size || copy_to_user(user_buffer, global_buffer, global_buffer_size)) {
-		printk("pi_uart - file /proc/pi-uart-data - copy_to_user failed\n");
+		printk("pi_uart - file /proc/pi-uart-data - copy_to_user ended\n");
 		return 0;
 	} else {
 		*offset += global_buffer_size;
