@@ -18,13 +18,12 @@ static int global_buffer_size = 0;
 static struct proc_dir_entry *proc_file;
 
 static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t count, loff_t *offset) {
-	printk("pi_uart - file /proc/pi-uart-data - ead was called!\n");
+	printk("pi_uart - file /proc/pi-uart-data - read was called!\n");
 
 	if (*offset >= global_buffer_size || copy_to_user(user_buffer, global_buffer, global_buffer_size)) {
 		printk("pi_uart - file /proc/pi-uart-data - copy_to_user failed\n");
 		return 0;
 	} else {
-		printk("pi_uart - file /proc/pi-uart-data - %s\n", file_pointer->f_path.dentry->d_name.name);
 		*offset += global_buffer_size;
 	}
 
