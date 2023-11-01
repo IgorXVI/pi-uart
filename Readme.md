@@ -26,6 +26,8 @@ adicionane a seguinte linha no fim do arquivo: `dtoverlay=pi_uart_overlay.dtbo`
 
 Depois do reboot entre de novo no terminal.
 
+`cd pi-uart`
+
 `sudo insmod pi_uart.ko`
 
 `dmesg | tail`
@@ -36,7 +38,7 @@ Confira se tem alguma mensagem de erro.
 
 ## Mandar dados por UART
 
-Se você tiver um adaptador USB para uart você pode conectar a parte USB no seu computador pessoal e a parte de UART nos pinos GPIO 14 (TX) e GPIO 15 (DX) do Raspberry Pi.
+Se você tiver um adaptador USB para UART você pode conectar a parte USB no seu computador pessoal e a parte de UART nos pinos GPIO 14 (TX) e GPIO 15 (RX) do Raspberry Pi.
 
 Depois execute os comandos abaixo no terminal do seu computador.
   
