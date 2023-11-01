@@ -6,68 +6,33 @@
 #include <linux/of_device.h>
 #include <linux/serdev.h>
 #include <linux/proc_fs.h>
-#include <linux/atomic.h>
 
 /* Meta Information */
 MODULE_LICENSE("GPL");
-
-enum {
-	CDEV_NOT_USED = 0,
-	CDEV_EXCLUSIVE_OPEN = 1,
-};
-
-static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED);
 
 /* Buffer for data */
 static char global_buffer[255];
 static int global_buffer_head = 0;
 static int global_buffer_size = 0;
-static int last_global_buffer_size = 0;
 
 static struct proc_dir_entry *proc_file;
 
-static ssize_t proc_read(struct file *File, char *user_buffer, size_t count, loff_t *offs) {
-	printk("pi_uart on file pi-uart-data - read was called!\n");
+static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t count, loff_t *offset) {
+	printk("pi_uart - file /proc/pi-uart-data - ead was called!\n");
 
-	if (global_buffer_size == last_global_buffer_size) {
+	if (*offset >= global_buffer_size || copy_to_user(user_buffer, global_buffer, global_buffer_size)) {
+		printk("pi_uart - file /proc/pi-uart-data - copy_to_user failed\n");
 		return 0;
+	} else {
+		printk("pi_uart - file /proc/pi-uart-data - %s\n", file_pointer->f_path.dentry->d_name.name);
+		*offset += global_buffer_size;
 	}
-
-	copy_to_user(user_buffer, global_buffer, global_buffer_size);
-
-	last_global_buffer_size = global_buffer_size;
 
 	return global_buffer_size;
 }
 
-static int proc_open(struct inode *device_file, struct file *instance) {
-	printk("pi_uart on file pi-uart-data - open was called!\n");
-
-	if(atomic_cmpxchg(&already_open, CDEV_NOT_USED, CDEV_EXCLUSIVE_OPEN)) {
-		return -EBUSY;
-	}
-
-	last_global_buffer_size = 0;
-
-	try_module_get(THIS_MODULE);
-
-	return 0;
-}
-
-static int proc_release(struct inode *device_file, struct file *instance) {
-	printk("pi_uart on file pi-uart-data - close was called!\n");
-
-	atomic_set(&already_open, CDEV_NOT_USED);
-
-	module_put(THIS_MODULE);
-
-	return 0;
-}
-
 static struct proc_ops pi_uart_proc_fops = {
-	.proc_read = proc_read,
-	.proc_open = proc_open,
-	.proc_release = proc_release
+	.proc_read = proc_read
 };
 
 /* Declate the probe and remove functions */
