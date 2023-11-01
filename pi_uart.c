@@ -6,9 +6,17 @@
 #include <linux/of_device.h>
 #include <linux/serdev.h>
 #include <linux/proc_fs.h>
+#include <linux/atomic.h>
 
 /* Meta Information */
 MODULE_LICENSE("GPL");
+
+enum {
+	CDEV_NOT_USED = 0,
+	CDEV_EXCLUSIVE_OPEN = 1,
+};
+
+static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED);
 
 /* Buffer for data */
 static char global_buffer[255];
@@ -35,14 +43,31 @@ static ssize_t proc_read(struct file *File, char *user_buffer, size_t count, lof
 static int proc_open(struct inode *device_file, struct file *instance) {
 	printk("pi_uart on file pi-uart-data - open was called!\n");
 
+	if(atomic_cmpxchg(&already_open, CDEV_NOT_USED, CDEV_EXCLUSIVE_OPEN)) {
+		return -EBUSY;
+	}
+
 	last_global_buffer_size = 0;
+
+	try_module_get(THIS_MODULE);
+
+	return 0;
+}
+
+static int proc_release(struct inode *device_file, struct file *instance) {
+	printk("pi_uart on file pi-uart-data - close was called!\n");
+
+	atomic_set(&already_open, CDEV_NOT_USED);
+
+	module_put(THIS_MODULE);
 
 	return 0;
 }
 
 static struct proc_ops pi_uart_proc_fops = {
 	.proc_read = proc_read,
-	.proc_open = proc_open
+	.proc_open = proc_open,
+	.proc_release = proc_release
 };
 
 /* Declate the probe and remove functions */
