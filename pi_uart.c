@@ -50,7 +50,8 @@ static void pi_uart_remove(struct serdev_device *serdev);
 static struct of_device_id pi_uart_ids[] = {
 	{
 		.compatible = "piuartdev"
-	}
+	},
+	NULL
 };
 
 MODULE_DEVICE_TABLE(of, pi_uart_ids);
