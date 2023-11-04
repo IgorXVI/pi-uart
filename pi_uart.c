@@ -51,7 +51,8 @@ static struct of_device_id pi_uart_ids[] = {
 	{
 		.compatible = "piuartdev"
 	},
-	NULL
+	//null entry no fim do array
+	{}
 };
 
 MODULE_DEVICE_TABLE(of, pi_uart_ids);
