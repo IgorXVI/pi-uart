@@ -49,10 +49,8 @@ static void pi_uart_remove(struct serdev_device *serdev);
 //atributo "compatible" deve ter o mesmo valor do que está no arquivo de overlay
 static struct of_device_id pi_uart_ids[] = {
 	{
-		.compatible = "brightlight,piuartdev"
-	},
-
-	{/* sentinel */}
+		.compatible = "piuartdev"
+	}
 };
 
 MODULE_DEVICE_TABLE(of, pi_uart_ids);
@@ -64,7 +62,7 @@ static struct serdev_device_driver pi_uart_driver = {
 	.driver = {
 		.name = "pi-uart",
 		.of_match_table = pi_uart_ids
-	},
+	}
 };
 
 //função que recebe os bytes por UART e salva o último byte recebido no buffer
