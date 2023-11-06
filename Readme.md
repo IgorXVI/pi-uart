@@ -16,7 +16,7 @@ Para instalar esse módulo siga os comandos abaixo dentro do terminal do seu Ras
 
 `make`
 
-`sudo cp pi_uart_overlay.dtbo /boot/overlays/`
+`sudo cp pi_uart_overlay.dtbo /boot/firmware/overlays/`
 
 `sudo nano /boot/config.txt`
 
