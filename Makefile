@@ -13,3 +13,5 @@ dt: pi_uart_overlay.dts
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
 	rm -rf pi_uart_overlay.dtbo
+	sudo rm /boot/firmware/overlays/pi_uart_overlay.dtbo || true
+	sudo sed -i '/dtoverlay=pi_uart_overlay.dtbo/d' /boot/config.txt
