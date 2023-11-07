@@ -3,7 +3,7 @@ obj-m += pi_uart.o
 all: module dt
 	echo Builded Device Tree Overlay and kernel module
 
-SED_END_OF_FILE="$a"
+SED_END_OF_FILE=$a
 
 module:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
