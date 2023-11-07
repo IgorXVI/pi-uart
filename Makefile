@@ -3,6 +3,8 @@ obj-m += pi_uart.o
 all: module dt
 	echo Builded Device Tree Overlay and kernel module
 
+SED_END_OF_FILE="$a"
+
 module:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
 dt: pi_uart_overlay.dts
@@ -10,7 +12,7 @@ dt: pi_uart_overlay.dts
 	sudo rm /boot/firmware/overlays/pi_uart_overlay.dtbo || true
 	sudo cp pi_uart_overlay.dtbo /boot/firmware/overlays/
 	sudo sed -i '/dtoverlay=pi_uart_overlay.dtbo/d' /boot/config.txt
-	sudo sed -i '$a\dtoverlay=pi_uart_overlay.dtbo' /boot/config.txt
+	sudo sed -i '$(SED_END_OF_FILE)\dtoverlay=pi_uart_overlay.dtbo' /boot/config.txt
 	echo Updated files '/boot/config.txt' and '/boot/firmware/overlays/pi_uart_overlay.dtbo'
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
