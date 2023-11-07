@@ -6,7 +6,7 @@
         target=<&uart1>;
         __overlay__ {
             piuartdev {
-                compatible="piuartdev";
+                compatible="brightlight,piuartdev";
             };
         };
     };
