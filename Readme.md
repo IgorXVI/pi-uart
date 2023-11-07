@@ -8,7 +8,7 @@ Para instalar esse módulo siga os comandos abaixo dentro do terminal do seu Ras
 
   
 
-`sudo apt install raspberrypi-kernel-headers git build-essential`
+`sudo apt install raspberrypi-kernel-headers git build-essential device-tree-compiler`
 
 `git clone https://github.com/IgorXVI/pi-uart.git`
 
