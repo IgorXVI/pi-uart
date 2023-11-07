@@ -16,6 +16,8 @@ Para instalar esse módulo siga os comandos abaixo dentro do terminal do seu Ras
 
 `make`
 
+`sudo insmod pi_uart.ko`
+
 `sudo reboot`
 
 Depois do reboot entre de novo no terminal.
