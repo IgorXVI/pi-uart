@@ -5,7 +5,7 @@
     fragment@0 {
         target=<&uart1>;
         __overlay__ {
-            pi_uart_gpio_14_and_15 {
+            piuartdev {
                 compatible="piuartdev";
                 status="okay";
             };
