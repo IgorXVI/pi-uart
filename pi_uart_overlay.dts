@@ -7,6 +7,7 @@
         __overlay__ {
             piuartdev {
                 compatible="brightlight,piuartdev";
+                status="okay";
             };
         };
     };
