@@ -15,4 +15,4 @@ clean:
 	rm -rf pi_uart_overlay.dtbo
 cleandt:
 	sudo rm /boot/overlays/pi_uart_overlay.dtbo || true
-	sudo sed -i '/dtoverlay=pi_uart_overlay/d' /boot/config.txt
+	sudo sed -i '/dtoverlay=pi_uart_overlay.dtbo/d' /boot/config.txt
