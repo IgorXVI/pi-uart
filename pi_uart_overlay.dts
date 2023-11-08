@@ -1,14 +1,14 @@
 /dts-v1/;
 /plugin/;
 / {
-	compatible = "brcm,bcm2835";
-	fragment@0 {
-		target = <&uart1>;
-		__overlay__ {
-			piuartdev {
-				compatible = "brightlight,piuartdev";
-				status = "okay";
-			};
-		};
-	};
+    compatible="brcm,bcm2835";
+    fragment@0 {
+        target=<&uart1>;
+        __overlay__ {
+            pi_uart_14_and_15 {
+                compatible="piuartdev";
+				status="okay";
+            };
+        };
+    };
 };

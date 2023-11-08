@@ -49,7 +49,7 @@ static void pi_uart_remove(struct serdev_device *serdev);
 //atributo "compatible" deve ter o mesmo valor do que está no arquivo de overlay
 static struct of_device_id pi_uart_ids[] = {
 	{
-		.compatible = "brightlight,piuartdev",
+		.compatible = "piuartdev"
 	},
 	//null entry no fim do array
 	{}
