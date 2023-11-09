@@ -8,13 +8,17 @@ Para instalar esse módulo siga os comandos abaixo dentro do terminal do seu Ras
 
   
 
-`sudo apt install raspberrypi-kernel-headers git build-essential device-tree-compiler`
+`sudo apt install raspberrypi-kernel-headers git build-essential`
 
 `git clone https://github.com/IgorXVI/pi-uart.git`
 
 `cd pi-uart`
 
 `make`
+
+`sudo cp echodev.dtbo /boot/overlays/`
+
+em "/boot/config.txt" adicionar uma linha no fim do arquivo: `dtoverlay=echodev` 
 
 `sudo reboot`
 
