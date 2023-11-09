@@ -4,15 +4,13 @@ all: module dt
 
 module:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-dt: pi_uart_overlay.dts
-	dtc -@ -I dts -O dtb -o pi_uart_overlay.dtbo pi_uart_overlay.dts
-	sudo rm /boot/overlays/pi_uart_overlay.dtbo || true
-	sudo cp pi_uart_overlay.dtbo /boot/overlays/
-	sudo sed -i '/dtoverlay=pi_uart_overlay.dtbo/d' /boot/config.txt
-	sudo sed -i '$$a\dtoverlay=pi_uart_overlay.dtbo' /boot/config.txt
+dt: echodev.dts
+	dtc -@ -I dts -O dtb -o echodev.dtbo echodev.dts
+	sudo cp echodev.dtbo /boot/overlays/
+	sudo sed -i '$$a\dtoverlay=echodev.dtbo' /boot/config.txt
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-	rm -rf pi_uart_overlay.dtbo
+	rm -rf echodev.dtbo
 cleandt:
-	sudo rm /boot/overlays/pi_uart_overlay.dtbo || true
-	sudo sed -i '/dtoverlay=pi_uart_overlay.dtbo/d' /boot/config.txt
+	sudo rm /boot/overlays/echodev.dtbo || true
+	sudo sed -i '/dtoverlay=echodev.dtbo/d' /boot/config.txt
