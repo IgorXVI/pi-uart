@@ -8,7 +8,6 @@
 #include <linux/proc_fs.h>
 #include <linux/minmax.h>
 
-#define MESSAGE_MAX_SIZE 255
 #define READ_BUFFER_MAX_SIZE 255
 #define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
@@ -95,34 +94,11 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 }
 
 // função que recebe os bytes por UART e salva o primeiro byte recebido no buffer
-static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer, size_t size)
+static int receive_buf(struct serdev_device *serdev, const unsigned char *received_buffer, size_t number_of_bytes_received)
 {
-	char received_message[MESSAGE_MAX_SIZE];
+	char received_char = (char)(*received_buffer);
 
-	int received_message_end = MESSAGE_MAX_SIZE - 1;
-
-	for (int i = 0; i < size; i++)
-	{
-		if (i == received_message_end)
-		{
-			break;
-		}
-
-		received_message[i] = (char)(*(buffer + i));
-	}
-
-	if (size < MESSAGE_MAX_SIZE)
-	{
-		received_message[size] = '\0';
-	}
-	else
-	{
-		received_message[received_message_end] = '\0';
-	}
-
-	serdev_device_write_buf(serdev, received_message, size + 1);
-
-	if (received_message[0] == '~')
+	if (received_char == '~')
 	{
 		char message[30] = "All previous messages erased.";
 
@@ -130,21 +106,21 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 		serdev_device_write_buf(serdev, message, sizeof(message));
 
-		return size;
+		goto RECEIVE_END;
 	}
 
-	if (received_message[0] == '^')
+	if (received_char == '^')
 	{
 		serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
 
-		return size;
+		goto RECEIVE_END;
 	}
 
-	if (received_message[0] == '`')
+	if (received_char == '`')
 	{
 		serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
 
-		return size;
+		goto RECEIVE_END;
 	}
 
 	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE - 1)
@@ -153,16 +129,17 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 		serdev_device_write_buf(serdev, message, sizeof(message));
 
-		return size;
+		goto RECEIVE_END;
 	}
 
-	proc_read_buffer[proc_read_buffer_size] = received_message[0];
+	proc_read_buffer[proc_read_buffer_size] = received_char;
 
 	proc_read_buffer[proc_read_buffer_size + 1] = '\0';
 
 	proc_read_buffer_size++;
 
-	return size;
+RECEIVE_END:
+	return number_of_bytes_received;
 }
 
 // arquivo proc que vai ser usado para ler o buffer

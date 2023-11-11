@@ -56,9 +56,16 @@ try:
             continue
 
         if user_message == "^":
-            print("Getting buffer contents...")
+            print("Getting read buffer contents...")
 
             ser.write(b"^")
+
+            continue
+
+        if user_message == "`":
+            print("Getting write buffer contents...")
+
+            ser.write(b"`")
 
             continue
 
