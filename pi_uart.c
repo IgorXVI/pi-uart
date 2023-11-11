@@ -7,6 +7,7 @@
 #include <linux/serdev.h>
 #include <linux/proc_fs.h>
 #include <linux/minmax.h>
+#include <linux/mutex.h>
 
 // informações sobre o módulo de kernel
 MODULE_LICENSE("GPL");
@@ -17,6 +18,8 @@ MODULE_DESCRIPTION("Simples modulo que recebe chars por UART e salva eles em um 
 #define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
 #define BAUDRATE 9600
+
+static struct mutex global_mutex;
 
 static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
 static int proc_read_buffer_size = 0;
@@ -31,15 +34,22 @@ static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t co
 {
 	printk("pi_uart - proc file - read was called!\n");
 
+	mutex_lock(&global_mutex);
+
 	if (*offset >= proc_read_buffer_size || copy_to_user(user_buffer, proc_read_buffer, proc_read_buffer_size))
 	{
 		printk("pi_uart - proc file - copy_to_user ended\n");
+
+		mutex_unlock(&global_mutex);
+
 		return 0;
 	}
 	else
 	{
 		*offset += proc_read_buffer_size;
 	}
+
+	mutex_unlock(&global_mutex);
 
 	return proc_read_buffer_size;
 }
@@ -48,10 +58,14 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 {
 	printk("pi_uart - proc file - write was called!\n");
 
+	mutex_lock(&global_mutex);
+
 	proc_write_buffer_size = min(WRITE_BUFFER_MAX_SIZE, count);
 
 	if (copy_from_user(proc_write_buffer, user_buffer, proc_write_buffer_size))
 	{
+		mutex_unlock(&global_mutex);
+
 		return -EFAULT;
 	}
 
@@ -67,6 +81,8 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 		proc_write_buffer[WRITE_BUFFER_MAX_SIZE - 1] = '\0';
 	}
 
+	mutex_unlock(&global_mutex);
+
 	return proc_write_buffer_size;
 }
 
@@ -74,6 +90,8 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 static int receive_buf(struct serdev_device *serdev, const unsigned char *received_buffer, size_t number_of_bytes_received)
 {
 	char received_char = (char)(*received_buffer);
+
+	mutex_lock(&global_mutex);
 
 	if (received_char == '~')
 	{
@@ -116,6 +134,8 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *receiv
 	proc_read_buffer_size++;
 
 RECEIVE_END:
+	mutex_unlock(&global_mutex);
+
 	return number_of_bytes_received;
 }
 
@@ -214,6 +234,8 @@ static int __init my_init(void)
 {
 	printk("pi_uart - Hello, Kernel!\n");
 
+	mutex_init(&global_mutex);
+
 	if (serdev_device_driver_register(&pi_uart_driver))
 	{
 		printk("pi_uart - could not load driver!\n");
@@ -226,6 +248,8 @@ static int __init my_init(void)
 static void __exit my_exit(void)
 {
 	printk("pi_uart - Goodbye, Kernel\n");
+
+	mutex_destroy(&global_mutex);
 
 	serdev_device_driver_unregister(&pi_uart_driver);
 }
