@@ -6,46 +6,17 @@
 #include <linux/of_device.h>
 #include <linux/serdev.h>
 #include <linux/proc_fs.h>
+#include <linux/minmax.h>
 
-#define MESSAGE_MAX_SIZE 255
+#define MESSAGE_MAX_SIZE 100
 #define READ_BUFFER_MAX_SIZE 255
+#define WRITE_BUFFER_MAX_SIZE 100UL
 #define PROC_FILE_NAME "pi-uart-data"
 
 // informações sobre o módulo de kernel
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Igor Tomelero de Almeida");
 MODULE_DESCRIPTION("Simples modulo que recebe chars por UART e salva eles num ring buffer, quando o arquivo proc é lido os dados do ring buffer são retornados.");
-
-static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
-static int proc_read_buffer_size = 0;
-
-// arquivo proc que vai ser usado para ler o buffer
-static struct proc_dir_entry *proc_file;
-
-// quando o usuário tentar ler do arquivo proc, exemplo: "cat /proc/<PROC_FILE_NAME>",
-// essa função vai ser chamada, ela simplismente retorna todo
-// o buffer na primeira vez que for chamada e depois retorna o valor 0
-static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t count, loff_t *offset)
-{
-	printk("pi_uart - proc file - read was called!\n");
-
-	if (*offset >= proc_read_buffer_size || copy_to_user(user_buffer, proc_read_buffer, proc_read_buffer_size))
-	{
-		printk("pi_uart - proc file - copy_to_user ended\n");
-		return 0;
-	}
-	else
-	{
-		*offset += proc_read_buffer_size;
-	}
-
-	return proc_read_buffer_size;
-}
-
-// declaração das operações no arquivo proc
-static struct proc_ops pi_uart_proc_fops = {
-	.proc_read = proc_read,
-};
 
 // Necessário declarar as funções do serdev antes de escreve-las
 
@@ -69,6 +40,63 @@ static struct serdev_device_driver pi_uart_driver = {
 		.name = "pi-uart",
 		.of_match_table = pi_uart_ids,
 	},
+};
+
+// arquivo proc que vai ser usado para ler o buffer
+static struct proc_dir_entry *proc_file;
+
+static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
+static int proc_read_buffer_size = 0;
+
+static char proc_write_buffer[WRITE_BUFFER_MAX_SIZE];
+static int proc_write_buffer_size = 0;
+
+// quando o usuário tentar ler do arquivo proc, exemplo: "cat /proc/<PROC_FILE_NAME>",
+// essa função vai ser chamada, ela simplismente retorna todo
+// o buffer na primeira vez que for chamada e depois retorna o valor 0
+static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t count, loff_t *offset)
+{
+	printk("pi_uart - proc file - read was called!\n");
+
+	if (*offset >= proc_read_buffer_size || copy_to_user(user_buffer, proc_read_buffer, proc_read_buffer_size))
+	{
+		printk("pi_uart - proc file - copy_to_user ended\n");
+		return 0;
+	}
+	else
+	{
+		*offset += proc_read_buffer_size;
+	}
+
+	return proc_read_buffer_size;
+}
+
+static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, size_t count, loff_t *offset)
+{
+	int proc_write_buffer[WRITE_BUFFER_MAX_SIZE];
+
+	size_t proc_write_buffer_size;
+
+	printk("pi_uart - proc file - write was called!\n");
+
+	proc_write_buffer_size = min(WRITE_BUFFER_MAX_SIZE, count);
+
+	if (copy_from_user(proc_write_buffer, user_buffer, proc_write_buffer_size))
+	{
+		return -EFAULT;
+	}
+
+	*offset += proc_write_buffer_size;
+
+	proc_write_buffer[proc_write_buffer_size - 1] = '\0';
+
+	return proc_write_buffer_size;
+}
+
+// declaração das operações no arquivo proc
+static struct proc_ops pi_uart_proc_fops = {
+	.proc_read = proc_read,
+	.proc_write = proc_write,
 };
 
 // função que recebe os bytes por UART e salva o primeiro byte recebido no buffer
@@ -111,6 +139,11 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 	if (received_message[0] == '^')
 	{
 		return serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
+	}
+
+	if (received_message[0] == '`')
+	{
+		return serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
 	}
 
 	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE - 1)
