@@ -13,7 +13,7 @@ def receive_messages():
         print("Listening for messages...")
 
         while True:
-            received_message = ser.read_until(expected=b"\n")
+            received_message = ser.read_until(expected=b"\0")
 
             formated = str(received_message, encoding="ascii")
 
