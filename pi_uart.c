@@ -8,6 +8,12 @@
 #include <linux/proc_fs.h>
 #include <linux/minmax.h>
 
+
+
+
+
+//CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
+
 #define READ_BUFFER_MAX_SIZE 255
 #define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
@@ -40,6 +46,102 @@ static struct serdev_device_driver pi_uart_driver = {
 		.of_match_table = pi_uart_ids,
 	},
 };
+
+// arquivo proc que vai ser usado para ler o buffer
+static struct proc_dir_entry *proc_file;
+
+// declaração das operações no arquivo proc
+static struct proc_ops pi_uart_proc_fops = {
+	.proc_read = proc_read,
+	.proc_write = proc_write,
+};
+
+static const struct serdev_device_ops pi_uart_ops = {
+	.receive_buf = receive_buf,
+};
+
+// Essa função vai ser chamada quando o serdev for registrado (na função my_init)
+static int pi_uart_probe(struct serdev_device *serdev)
+{
+	int status;
+
+	printk("pi_uart - now im in the probe function!\n");
+
+	// cria a proc file no path /proc/<PROC_FILE_NAME>
+	proc_file = proc_create(PROC_FILE_NAME, 0666, NULL, &pi_uart_proc_fops);
+	if (proc_file == NULL)
+	{
+		printk("pi_uart - Error creating proc file!\n");
+		return -ENOMEM;
+	}
+
+	// registra a operação de receber dados
+	serdev_device_set_client_ops(serdev, &pi_uart_ops);
+
+	// tenta inicializar o serdev
+	status = serdev_device_open(serdev);
+
+	if (status > 1)
+	{
+		printk("pi_uart - error when opening the serial device!\n");
+		return -1;
+	}
+
+	// determina o baud rate como 9600
+	// um baud é uma medida de velocidade de sinalização e representa o número de mudanças na linha de transmissão ou eventos por segundo
+	serdev_device_set_baudrate(serdev, 9600);
+
+	// determina que não tem flow control
+	serdev_device_set_flow_control(serdev, false);
+
+	// determina que não tem bit de paridade
+	serdev_device_set_parity(serdev, SERDEV_PARITY_NONE);
+
+	return 0;
+}
+
+// Essa função vai ser chamada quando o serdev for removido (na função my_exit)
+static void pi_uart_remove(struct serdev_device *serdev)
+{
+	printk("pi_uart - now im in the remove function!\n");
+
+	// apaga o arquivo proc
+	proc_remove(proc_file);
+
+	// mata o serdev
+	serdev_device_close(serdev);
+}
+
+static int __init my_init(void)
+{
+	printk("pi_uart - Hello, Kernel!\n");
+
+	if (serdev_device_driver_register(&pi_uart_driver))
+	{
+		printk("pi_uart - could not load driver!\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+static void __exit my_exit(void)
+{
+	printk("pi_uart - Goodbye, Kernel\n");
+
+	serdev_device_driver_unregister(&pi_uart_driver);
+}
+
+module_init(my_init);
+module_exit(my_exit);
+
+//FIM DAS CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 
 static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
 static int proc_read_buffer_size = 0;
@@ -141,91 +243,3 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *receiv
 RECEIVE_END:
 	return number_of_bytes_received;
 }
-
-// arquivo proc que vai ser usado para ler o buffer
-static struct proc_dir_entry *proc_file;
-
-// declaração das operações no arquivo proc
-static struct proc_ops pi_uart_proc_fops = {
-	.proc_read = proc_read,
-	.proc_write = proc_write,
-};
-
-static const struct serdev_device_ops pi_uart_ops = {
-	.receive_buf = receive_buf,
-};
-
-// Essa função vai ser chamada quando o serdev for registrado (na função my_init)
-static int pi_uart_probe(struct serdev_device *serdev)
-{
-	int status;
-
-	printk("pi_uart - now im in the probe function!\n");
-
-	// cria a proc file no path /proc/<PROC_FILE_NAME>
-	proc_file = proc_create(PROC_FILE_NAME, 0666, NULL, &pi_uart_proc_fops);
-	if (proc_file == NULL)
-	{
-		printk("pi_uart - Error creating proc file!\n");
-		return -ENOMEM;
-	}
-
-	// registra a operação de receber dados
-	serdev_device_set_client_ops(serdev, &pi_uart_ops);
-
-	// tenta inicializar o serdev
-	status = serdev_device_open(serdev);
-
-	if (status > 1)
-	{
-		printk("pi_uart - error when opening the serial device!\n");
-		return -1;
-	}
-
-	// determina o baud rate como 9600
-	// um baud é uma medida de velocidade de sinalização e representa o número de mudanças na linha de transmissão ou eventos por segundo
-	serdev_device_set_baudrate(serdev, 9600);
-
-	// determina que não tem flow control
-	serdev_device_set_flow_control(serdev, false);
-
-	// determina que não tem bit de paridade
-	serdev_device_set_parity(serdev, SERDEV_PARITY_NONE);
-
-	return 0;
-}
-
-// Essa função vai ser chamada quando o serdev for removido (na função my_exit)
-static void pi_uart_remove(struct serdev_device *serdev)
-{
-	printk("pi_uart - now im in the remove function!\n");
-
-	// apaga o arquivo proc
-	proc_remove(proc_file);
-
-	// mata o serdev
-	serdev_device_close(serdev);
-}
-
-static int __init my_init(void)
-{
-	printk("pi_uart - Hello, Kernel!\n");
-
-	if (serdev_device_driver_register(&pi_uart_driver))
-	{
-		printk("pi_uart - could not load driver!\n");
-		return -1;
-	}
-
-	return 0;
-}
-
-static void __exit my_exit(void)
-{
-	printk("pi_uart - Goodbye, Kernel\n");
-
-	serdev_device_driver_unregister(&pi_uart_driver);
-}
-
-module_init(my_init);
-module_exit(my_exit);
