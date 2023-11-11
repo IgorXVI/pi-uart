@@ -8,15 +8,112 @@
 #include <linux/proc_fs.h>
 #include <linux/minmax.h>
 
-
-
-
-
-//CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
-
 #define READ_BUFFER_MAX_SIZE 255
 #define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
+
+static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
+static int proc_read_buffer_size = 0;
+
+static char proc_write_buffer[WRITE_BUFFER_MAX_SIZE];
+static int proc_write_buffer_size = 0;
+
+// quando o usuário tentar ler do arquivo proc, exemplo: "cat /proc/<PROC_FILE_NAME>",
+// essa função vai ser chamada, ela simplismente retorna todo
+// o buffer na primeira vez que for chamada e depois retorna o valor 0
+static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t count, loff_t *offset)
+{
+	printk("pi_uart - proc file - read was called!\n");
+
+	if (*offset >= proc_read_buffer_size || copy_to_user(user_buffer, proc_read_buffer, proc_read_buffer_size))
+	{
+		printk("pi_uart - proc file - copy_to_user ended\n");
+		return 0;
+	}
+	else
+	{
+		*offset += proc_read_buffer_size;
+	}
+
+	return proc_read_buffer_size;
+}
+
+static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, size_t count, loff_t *offset)
+{
+	printk("pi_uart - proc file - write was called!\n");
+
+	proc_write_buffer_size = min(WRITE_BUFFER_MAX_SIZE, count);
+
+	if (copy_from_user(proc_write_buffer, user_buffer, proc_write_buffer_size))
+	{
+		return -EFAULT;
+	}
+
+	*offset += proc_write_buffer_size;
+
+	if (proc_write_buffer_size < WRITE_BUFFER_MAX_SIZE)
+	{
+		proc_write_buffer[proc_write_buffer_size] = '\0';
+		proc_write_buffer_size++;
+	}
+	else
+	{
+		proc_write_buffer[WRITE_BUFFER_MAX_SIZE - 1] = '\0';
+	}
+
+	return proc_write_buffer_size;
+}
+
+// função que recebe os bytes por UART e salva o primeiro byte recebido no buffer
+static int receive_buf(struct serdev_device *serdev, const unsigned char *received_buffer, size_t number_of_bytes_received)
+{
+	char received_char = (char)(*received_buffer);
+
+	if (received_char == '~')
+	{
+		char message[30] = "All previous messages erased.";
+
+		proc_read_buffer_size = 0;
+
+		serdev_device_write_buf(serdev, message, sizeof(message));
+
+		goto RECEIVE_END;
+	}
+
+	if (received_char == '^')
+	{
+		serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
+
+		goto RECEIVE_END;
+	}
+
+	if (received_char == '`')
+	{
+		serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
+
+		goto RECEIVE_END;
+	}
+
+	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE - 1)
+	{
+		char message[25] = "Max buffer size reached!";
+
+		serdev_device_write_buf(serdev, message, sizeof(message));
+
+		goto RECEIVE_END;
+	}
+
+	proc_read_buffer[proc_read_buffer_size] = received_char;
+
+	proc_read_buffer[proc_read_buffer_size + 1] = '\0';
+
+	proc_read_buffer_size++;
+
+RECEIVE_END:
+	return number_of_bytes_received;
+}
+
+// CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
 
 // informações sobre o módulo de kernel
 MODULE_LICENSE("GPL");
@@ -134,112 +231,3 @@ static void __exit my_exit(void)
 
 module_init(my_init);
 module_exit(my_exit);
-
-//FIM DAS CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
-static int proc_read_buffer_size = 0;
-
-static char proc_write_buffer[WRITE_BUFFER_MAX_SIZE];
-static int proc_write_buffer_size = 0;
-
-// quando o usuário tentar ler do arquivo proc, exemplo: "cat /proc/<PROC_FILE_NAME>",
-// essa função vai ser chamada, ela simplismente retorna todo
-// o buffer na primeira vez que for chamada e depois retorna o valor 0
-static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t count, loff_t *offset)
-{
-	printk("pi_uart - proc file - read was called!\n");
-
-	if (*offset >= proc_read_buffer_size || copy_to_user(user_buffer, proc_read_buffer, proc_read_buffer_size))
-	{
-		printk("pi_uart - proc file - copy_to_user ended\n");
-		return 0;
-	}
-	else
-	{
-		*offset += proc_read_buffer_size;
-	}
-
-	return proc_read_buffer_size;
-}
-
-static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, size_t count, loff_t *offset)
-{
-	printk("pi_uart - proc file - write was called!\n");
-
-	proc_write_buffer_size = min(WRITE_BUFFER_MAX_SIZE, count);
-
-	if (copy_from_user(proc_write_buffer, user_buffer, proc_write_buffer_size))
-	{
-		return -EFAULT;
-	}
-
-	*offset += proc_write_buffer_size;
-
-	if (proc_write_buffer_size < WRITE_BUFFER_MAX_SIZE)
-	{
-		proc_write_buffer[proc_write_buffer_size] = '\0';
-		proc_write_buffer_size++;
-	}
-	else
-	{
-		proc_write_buffer[WRITE_BUFFER_MAX_SIZE - 1] = '\0';
-	}
-
-	return proc_write_buffer_size;
-}
-
-// função que recebe os bytes por UART e salva o primeiro byte recebido no buffer
-static int receive_buf(struct serdev_device *serdev, const unsigned char *received_buffer, size_t number_of_bytes_received)
-{
-	char received_char = (char)(*received_buffer);
-
-	if (received_char == '~')
-	{
-		char message[30] = "All previous messages erased.";
-
-		proc_read_buffer_size = 0;
-
-		serdev_device_write_buf(serdev, message, sizeof(message));
-
-		goto RECEIVE_END;
-	}
-
-	if (received_char == '^')
-	{
-		serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
-
-		goto RECEIVE_END;
-	}
-
-	if (received_char == '`')
-	{
-		serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
-
-		goto RECEIVE_END;
-	}
-
-	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE - 1)
-	{
-		char message[25] = "Max buffer size reached!";
-
-		serdev_device_write_buf(serdev, message, sizeof(message));
-
-		goto RECEIVE_END;
-	}
-
-	proc_read_buffer[proc_read_buffer_size] = received_char;
-
-	proc_read_buffer[proc_read_buffer_size + 1] = '\0';
-
-	proc_read_buffer_size++;
-
-RECEIVE_END:
-	return number_of_bytes_received;
-}
