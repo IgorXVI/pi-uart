@@ -128,24 +128,32 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 		proc_read_buffer_size = 0;
 
-		return serdev_device_write_buf(serdev, message, sizeof(message));
+		serdev_device_write_buf(serdev, message, sizeof(message));
+
+		return size;
 	}
 
 	if (received_message[0] == '^')
 	{
-		return serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
+		serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
+
+		return size;
 	}
 
 	if (received_message[0] == '`')
 	{
-		return serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
+		serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
+
+		return size;
 	}
 
 	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE - 1)
 	{
 		char message[25] = "Max buffer size reached!";
 
-		return serdev_device_write_buf(serdev, message, sizeof(message));
+		serdev_device_write_buf(serdev, message, sizeof(message));
+
+		return size;
 	}
 
 	proc_read_buffer[proc_read_buffer_size] = received_message[0];
