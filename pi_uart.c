@@ -74,7 +74,7 @@ static int receive_data_by_uart_and_save_last_byte(struct serdev_device *serdev,
 	char *last_char_ptr = buffer + size - 1;
 	char last_char = (char)(*last_char_ptr);
 
-	char message[3] = {last_char, '\0'};
+	char message[2] = {last_char, '\0'};
 
 	printk("pi_uart - Received %ld bytes with \"%s\"\n", size, message);
 
