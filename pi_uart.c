@@ -74,23 +74,25 @@ static struct serdev_device_driver pi_uart_driver = {
 // função que recebe os bytes por UART e salva o primeiro byte recebido no buffer
 static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer, size_t size)
 {
-	char message[MESSAGE_MAX_SIZE];
+	char received_message[MESSAGE_MAX_SIZE];
 
-	int message_end = MESSAGE_MAX_SIZE - 1;
+	int received_message_end = MESSAGE_MAX_SIZE - 1;
 
-	for(int i = 0; i < size; i++) {
-		if(i == message_end) {
+	for (int i = 0; i < size; i++)
+	{
+		if (i == received_message_end)
+		{
 			break;
 		}
 
-		message[i] = (char)(*(buffer + i));
+		received_message[i] = (char)(*(buffer + i));
 	}
 
-	message[message_end] = '\0';
+	received_message[received_message_end] = '\0';
 
-	printk("pi_uart - Received %ld bytes with \"%s\"\n", size, message);
+	printk("pi_uart - Received %ld bytes with \"%s\"\n", size, received_message);
 
-	if (message[0] == '~')
+	if (received_message[0] == '~')
 	{
 		char message[32] = "All previous messages erased.\n";
 
@@ -106,7 +108,12 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 		return serdev_device_write_buf(serdev, message, sizeof(message));
 	}
 
-	proc_read_buffer[proc_read_buffer_size] = message[0];
+	if (received_message[0] == '^')
+	{
+		return serdev_device_write_buf(serdev, proc_read_buffer, sizeof(proc_read_buffer));
+	}
+
+	proc_read_buffer[proc_read_buffer_size] = received_message[0];
 
 	proc_read_buffer_size++;
 

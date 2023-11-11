@@ -54,6 +54,13 @@ try:
 
             continue
 
+        if user_message == "^":
+            print("Getting buffer contents...")
+
+            ser.write(b"^")
+
+            continue
+
         ascii_bytes = (user_message + "\n").encode("ascii")
 
         ser.write(ascii_bytes)
