@@ -103,7 +103,7 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 	if (received_message[0] == '^')
 	{
-		return serdev_device_write_buf(serdev, proc_read_buffer, READ_BUFFER_MAX_SIZE);
+		return serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
 	}
 
 	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE - 1)
