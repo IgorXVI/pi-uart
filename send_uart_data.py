@@ -45,7 +45,6 @@ try:
 
                 print(formated)
 
-
             continue
 
         if user_message == "~":

@@ -8,6 +8,7 @@
 #include <linux/proc_fs.h>
 
 #define MESSAGE_MAX_SIZE 255
+#define READ_BUFFER_MAX_SIZE 10
 #define PROC_FILE_NAME "pi-uart-data"
 
 // informações sobre o módulo de kernel
@@ -15,7 +16,7 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Igor Tomelero de Almeida");
 MODULE_DESCRIPTION("Simples modulo que recebe chars por UART e salva eles num ring buffer, quando o arquivo proc é lido os dados do ring buffer são retornados.");
 
-static char proc_read_buffer[255];
+static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
 static int proc_read_buffer_size = 0;
 
 // arquivo proc que vai ser usado para ler o buffer
@@ -95,9 +96,10 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 		return size;
 	}
 
-	if (proc_read_buffer_size >= 255)
+	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE)
 	{
-		return size;
+		char error_message[24] = "Max buffer size reached!\n";
+		return serdev_device_write_buf(serdev, error_message, sizeof(error_message));
 	}
 
 	proc_read_buffer[proc_read_buffer_size] = message[0];
