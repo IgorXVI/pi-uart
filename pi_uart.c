@@ -8,7 +8,7 @@
 #include <linux/proc_fs.h>
 
 #define MESSAGE_MAX_SIZE 255
-#define READ_BUFFER_MAX_SIZE 10
+#define READ_BUFFER_MAX_SIZE 255
 #define PROC_FILE_NAME "pi-uart-data"
 
 // informações sobre o módulo de kernel

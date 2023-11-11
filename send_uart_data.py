@@ -1,6 +1,7 @@
 import serial
 from threading import Thread, Lock
 import traceback
+from datetime import datetime
 
 ser = serial.Serial("/dev/ttyUSB0", baudrate=9600, parity="N")
 
@@ -18,7 +19,7 @@ def receive_messages():
             formated = str(received_message, encoding="ascii")
 
             with mutex:
-                received_messages.append(formated)
+                received_messages.append(f"{datetime.now()}: {formated}")
 
     except TypeError:
         pass
@@ -41,7 +42,7 @@ try:
             print("Printing received messages...")
 
             with mutex:
-                formated = "".join(received_messages)
+                formated = "\n".join(received_messages)
 
                 print(formated)
 
