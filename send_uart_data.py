@@ -1,8 +1,11 @@
 import serial
 
-message = b"-"
+ser = serial.Serial("/dev/ttyUSB0", baudrate=9600, parity="N")
 
-ser = serial.Serial("/dev/ttyUSB0")
-print(ser.name)
+message = b"~Igor de Almeida"
+
+print(message)
+
 ser.write(message)
+
 ser.close()
