@@ -75,7 +75,7 @@ static int receive_data_by_uart_and_save_last_byte(struct serdev_device *serdev,
 	char *last_char_ptr = buffer + size - 1;
 	char last_char = (char)(*last_char_ptr);
 
-	printk("pi_uart - Received %ld bytes with \"%s\"\n", size, buffer);
+	printk("pi_uart - Received %ld bytes with \"%#02x\"\n", size, buffer);
 
 	//volta o ponteiro de escrita para o início do buffer global
 	//se o tamanho máximo ja tiver sido atingido
