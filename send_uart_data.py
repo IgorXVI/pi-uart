@@ -2,10 +2,23 @@ import serial
 
 ser = serial.Serial("/dev/ttyUSB0", baudrate=9600, parity="N")
 
-message = b"~Igor de Almeida"
+try:
+    while True:
+        user_message = input("Your message: ")
 
-print(message)
+        if(user_message == "~"):
+            print("Erasing previous messages...")
+            ser.write(b"~")
+            continue
 
-ser.write(message)
+        print(f"Sending message: {user_message}")
 
-ser.close()
+        ascii_bytes = (user_message + "\n").encode("ascii")
+
+        ser.write(ascii_bytes)
+
+        print("Message was sent!")
+
+except:
+    print("Closing connection...")
+    ser.close()
