@@ -88,7 +88,14 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 		received_message[i] = (char)(*(buffer + i));
 	}
 
-	received_message[received_message_end] = '\0';
+	if (size >= MESSAGE_MAX_SIZE)
+	{
+		received_message[received_message_end] = '\0';
+	}
+	else
+	{
+		received_message[size] = '\0';
+	}
 
 	serdev_device_write_buf(serdev, received_message, size);
 
