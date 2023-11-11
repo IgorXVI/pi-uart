@@ -71,13 +71,10 @@ static struct serdev_device_driver pi_uart_driver = {
 //quando o buffer estiver cheio a função vai voltar o inicio e começar a
 //sobreescrever os dados que estavam no inicio
 static int receive_data_by_uart_and_save_last_byte(struct serdev_device *serdev, const unsigned char *buffer, size_t size) {
-	char *first_char_ptr = buffer;
-	char first_char = (char)(*first_char_ptr);
-
 	char *last_char_ptr = buffer + size - 1;
 	char last_char = (char)(*last_char_ptr);
 
-	char message[3] = {first_char, last_char, '\0'};
+	char message[3] = {last_char, '\0'};
 
 	printk("pi_uart - Received %ld bytes with \"%s\"\n", size, message);
 
