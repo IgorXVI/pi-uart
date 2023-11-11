@@ -8,9 +8,15 @@
 #include <linux/proc_fs.h>
 #include <linux/minmax.h>
 
+// informações sobre o módulo de kernel
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Igor Tomelero de Almeida");
+MODULE_DESCRIPTION("Simples modulo que recebe chars por UART e salva eles em um buffer.");
+
 #define READ_BUFFER_MAX_SIZE 255
 #define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
+#define BAUDRATE 9600
 
 static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
 static int proc_read_buffer_size = 0;
@@ -113,12 +119,17 @@ RECEIVE_END:
 	return number_of_bytes_received;
 }
 
-// CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
+static struct proc_ops pi_uart_proc_fops = {
+	.proc_read = proc_read,
+	.proc_write = proc_write,
+};
 
-// informações sobre o módulo de kernel
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Igor Tomelero de Almeida");
-MODULE_DESCRIPTION("Simples modulo que recebe chars por UART e salva eles num ring buffer, quando o arquivo proc é lido os dados do ring buffer são retornados.");
+static const struct serdev_device_ops pi_uart_ops = {
+	.receive_buf = receive_buf,
+};
+
+// CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
+// mexer aqui apenas para arrumar erros de ortografia nas mensagens de log ou nos comentários, o resto do código não deve ser alterado
 
 // Necessário declarar as funções do serdev antes de escreve-las
 
@@ -147,16 +158,6 @@ static struct serdev_device_driver pi_uart_driver = {
 // arquivo proc que vai ser usado para ler o buffer
 static struct proc_dir_entry *proc_file;
 
-// declaração das operações no arquivo proc
-static struct proc_ops pi_uart_proc_fops = {
-	.proc_read = proc_read,
-	.proc_write = proc_write,
-};
-
-static const struct serdev_device_ops pi_uart_ops = {
-	.receive_buf = receive_buf,
-};
-
 // Essa função vai ser chamada quando o serdev for registrado (na função my_init)
 static int pi_uart_probe(struct serdev_device *serdev)
 {
@@ -184,9 +185,9 @@ static int pi_uart_probe(struct serdev_device *serdev)
 		return -1;
 	}
 
-	// determina o baud rate como 9600
+	// determina o baud rate
 	// um baud é uma medida de velocidade de sinalização e representa o número de mudanças na linha de transmissão ou eventos por segundo
-	serdev_device_set_baudrate(serdev, 9600);
+	serdev_device_set_baudrate(serdev, BAUDRATE);
 
 	// determina que não tem flow control
 	serdev_device_set_flow_control(serdev, false);
