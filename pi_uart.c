@@ -101,7 +101,7 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 	if (received_message[0] == '~')
 	{
-		char message[32] = "All previous messages erased.";
+		char message[30] = "All previous messages erased.";
 
 		proc_read_buffer_size = 0;
 
