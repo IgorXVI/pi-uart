@@ -97,6 +97,8 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 		received_message[size] = '\0';
 	}
 
+	serdev_device_write_buf(serdev, received_message, size + 1);
+
 	if (received_message[0] == '~')
 	{
 		char message[32] = "All previous messages erased.";
@@ -124,7 +126,7 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 	proc_read_buffer_size++;
 
-	return serdev_device_write_buf(serdev, received_message, size);
+	return size;
 }
 
 static const struct serdev_device_ops pi_uart_ops = {
