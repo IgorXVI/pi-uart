@@ -18,6 +18,8 @@ MODULE_DESCRIPTION("Simples modulo que recebe chars por UART e salva eles em um 
 #define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
 #define BAUDRATE 9600
+#define DELETE_MESSAGE "All previous messages erased."
+#define MAX_SIZE_MESSAGE "Max buffer size reached!"
 
 static struct mutex global_mutex;
 
@@ -38,9 +40,9 @@ static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t co
 
 	if (*offset >= proc_read_buffer_size || copy_to_user(user_buffer, proc_read_buffer, proc_read_buffer_size))
 	{
-		printk("pi_uart - proc file - copy_to_user ended\n");
-
 		mutex_unlock(&global_mutex);
+
+		printk("pi_uart - proc file - copy_to_user ended\n");
 
 		return 0;
 	}
@@ -95,11 +97,9 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *receiv
 
 	if (received_char == '~')
 	{
-		char message[30] = "All previous messages erased.";
-
 		proc_read_buffer_size = 0;
 
-		serdev_device_write_buf(serdev, message, sizeof(message));
+		serdev_device_write_buf(serdev, DELETE_MESSAGE, sizeof(DELETE_MESSAGE));
 
 		goto RECEIVE_END;
 	}
@@ -120,9 +120,7 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *receiv
 
 	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE - 1)
 	{
-		char message[25] = "Max buffer size reached!";
-
-		serdev_device_write_buf(serdev, message, sizeof(message));
+		serdev_device_write_buf(serdev, MAX_SIZE_MESSAGE, sizeof(MAX_SIZE_MESSAGE));
 
 		goto RECEIVE_END;
 	}
