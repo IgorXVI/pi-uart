@@ -42,9 +42,6 @@ static struct serdev_device_driver pi_uart_driver = {
 	},
 };
 
-// arquivo proc que vai ser usado para ler o buffer
-static struct proc_dir_entry *proc_file;
-
 static char proc_read_buffer[READ_BUFFER_MAX_SIZE];
 static int proc_read_buffer_size = 0;
 
@@ -84,7 +81,15 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 
 	*offset += proc_write_buffer_size;
 
-	proc_write_buffer[proc_write_buffer_size - 1] = '\0';
+	if (proc_write_buffer_size < WRITE_BUFFER_MAX_SIZE)
+	{
+		proc_write_buffer[proc_write_buffer_size] = '\0';
+		proc_write_buffer_size++;
+	}
+	else
+	{
+		proc_write_buffer[WRITE_BUFFER_MAX_SIZE - 1] = '\0';
+	}
 
 	return proc_write_buffer_size;
 }
@@ -106,13 +111,13 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 		received_message[i] = (char)(*(buffer + i));
 	}
 
-	if (size >= MESSAGE_MAX_SIZE)
+	if (size < MESSAGE_MAX_SIZE)
 	{
-		received_message[received_message_end] = '\0';
+		received_message[size] = '\0';
 	}
 	else
 	{
-		received_message[size] = '\0';
+		received_message[received_message_end] = '\0';
 	}
 
 	serdev_device_write_buf(serdev, received_message, size + 1);
@@ -151,6 +156,9 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 	return size;
 }
+
+// arquivo proc que vai ser usado para ler o buffer
+static struct proc_dir_entry *proc_file;
 
 // declaração das operações no arquivo proc
 static struct proc_ops pi_uart_proc_fops = {
