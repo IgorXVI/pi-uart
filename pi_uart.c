@@ -98,7 +98,7 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE)
 	{
-		char error_message[24] = "Max buffer size reached!\n";
+		char error_message[25] = "Max buffer size reached!\n";
 		return serdev_device_write_buf(serdev, error_message, sizeof(error_message));
 	}
 
