@@ -41,7 +41,7 @@ try:
             print("Printing received messages...")
 
             with mutex:
-                formated = "\n".join(received_messages)
+                formated = "".join(received_messages)
 
                 print(formated)
 

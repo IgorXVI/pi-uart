@@ -92,14 +92,18 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 	if (message[0] == '~')
 	{
+		char message[32] = "All previous messages erased.\n";
+
 		proc_read_buffer_size = 0;
-		return size;
+
+		return serdev_device_write_buf(serdev, message, sizeof(message));
 	}
 
 	if (proc_read_buffer_size >= READ_BUFFER_MAX_SIZE)
 	{
-		char error_message[25] = "Max buffer size reached!\n";
-		return serdev_device_write_buf(serdev, error_message, sizeof(error_message));
+		char message[25] = "Max buffer size reached!\n";
+
+		return serdev_device_write_buf(serdev, message, sizeof(message));
 	}
 
 	proc_read_buffer[proc_read_buffer_size] = message[0];
