@@ -82,7 +82,7 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 			break;
 		}
 
-		message[i] = (char)(*(buffer + 1));
+		message[i] = (char)(*(buffer + i));
 	}
 
 	message[message_end] = '\0';
