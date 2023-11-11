@@ -8,9 +8,9 @@
 #include <linux/proc_fs.h>
 #include <linux/minmax.h>
 
-#define MESSAGE_MAX_SIZE 100
+#define MESSAGE_MAX_SIZE 255
 #define READ_BUFFER_MAX_SIZE 255
-#define WRITE_BUFFER_MAX_SIZE 100UL
+#define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
 
 // informações sobre o módulo de kernel
@@ -73,10 +73,6 @@ static ssize_t proc_read(struct file *file_pointer, char *user_buffer, size_t co
 
 static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, size_t count, loff_t *offset)
 {
-	int proc_write_buffer[WRITE_BUFFER_MAX_SIZE];
-
-	size_t proc_write_buffer_size;
-
 	printk("pi_uart - proc file - write was called!\n");
 
 	proc_write_buffer_size = min(WRITE_BUFFER_MAX_SIZE, count);
@@ -92,12 +88,6 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 
 	return proc_write_buffer_size;
 }
-
-// declaração das operações no arquivo proc
-static struct proc_ops pi_uart_proc_fops = {
-	.proc_read = proc_read,
-	.proc_write = proc_write,
-};
 
 // função que recebe os bytes por UART e salva o primeiro byte recebido no buffer
 static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer, size_t size)
@@ -161,6 +151,12 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *buffer
 
 	return size;
 }
+
+// declaração das operações no arquivo proc
+static struct proc_ops pi_uart_proc_fops = {
+	.proc_read = proc_read,
+	.proc_write = proc_write,
+};
 
 static const struct serdev_device_ops pi_uart_ops = {
 	.receive_buf = receive_buf,
