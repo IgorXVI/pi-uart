@@ -18,8 +18,8 @@ MODULE_DESCRIPTION("Simples modulo que recebe chars por UART e salva eles em um 
 #define WRITE_BUFFER_MAX_SIZE 255UL
 #define PROC_FILE_NAME "pi-uart-data"
 #define BAUDRATE 9600
-#define DELETE_MESSAGE "All previous messages erased."
-#define MAX_SIZE_MESSAGE "Max buffer size reached!"
+#define DELETE_MESSAGE "All previous messages erased.\0"
+#define MAX_SIZE_MESSAGE "Max buffer size reached!\0"
 
 static struct mutex global_mutex;
 
