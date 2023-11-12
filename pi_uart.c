@@ -173,23 +173,12 @@ static struct serdev_device_driver pi_uart_driver = {
 	},
 };
 
-// arquivo proc que vai ser usado para ler o buffer
-static struct proc_dir_entry *proc_file;
-
 // Essa função vai ser chamada quando o serdev for registrado (na função my_init)
 static int pi_uart_probe(struct serdev_device *serdev)
 {
 	int status;
 
 	printk("pi_uart - now im in the probe function!\n");
-
-	// cria a proc file no path /proc/<PROC_FILE_NAME>
-	proc_file = proc_create(PROC_FILE_NAME, 0666, NULL, &pi_uart_proc_fops);
-	if (proc_file == NULL)
-	{
-		printk("pi_uart - Error creating proc file!\n");
-		return -ENOMEM;
-	}
 
 	// registra a operação de receber dados
 	serdev_device_set_client_ops(serdev, &pi_uart_ops);
@@ -200,6 +189,7 @@ static int pi_uart_probe(struct serdev_device *serdev)
 	if (status > 1)
 	{
 		printk("pi_uart - error when opening the serial device!\n");
+
 		return -1;
 	}
 
@@ -221,16 +211,25 @@ static void pi_uart_remove(struct serdev_device *serdev)
 {
 	printk("pi_uart - now im in the remove function!\n");
 
-	// apaga o arquivo proc
-	proc_remove(proc_file);
-
-	// mata o serdev
 	serdev_device_close(serdev);
 }
+
+// arquivo proc que vai ser usado para ler o buffer
+static struct proc_dir_entry *proc_file;
 
 static int __init my_init(void)
 {
 	printk("pi_uart - Hello, Kernel!\n");
+
+	// cria a proc file no path /proc/<PROC_FILE_NAME>
+	proc_file = proc_create(PROC_FILE_NAME, 0666, NULL, &pi_uart_proc_fops);
+
+	if (proc_file == NULL)
+	{
+		printk("pi_uart - Error creating proc file!\n");
+
+		return -1;
+	}
 
 	mutex_init(&global_mutex);
 
@@ -239,6 +238,8 @@ static int __init my_init(void)
 		printk("pi_uart - could not load driver!\n");
 
 		mutex_destroy(&global_mutex);
+
+		proc_remove(proc_file);
 
 		return -1;
 	}
@@ -251,6 +252,8 @@ static void __exit my_exit(void)
 	printk("pi_uart - Goodbye, Kernel\n");
 
 	mutex_destroy(&global_mutex);
+
+	proc_remove(proc_file);
 
 	serdev_device_driver_unregister(&pi_uart_driver);
 }
