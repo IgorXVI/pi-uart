@@ -53,26 +53,4 @@ Confira se apareceu o aviso de que a função "probe" foi chamada, se sim deu tu
 
 ## Mandar dados por UART
 
-Se você tiver um adaptador USB para UART você pode conectar a parte USB no seu computador pessoal e a parte de UART nos pinos GPIO 14 (TX) e GPIO 15 (RX) do Raspberry Pi.
-
-Depois execute os comandos abaixo no terminal do seu computador.
-  
-
-`sudo apt install git python3`
-
-`git clone https://github.com/IgorXVI/pi-uart.git`
-
-`cd pi-uart`
-
-`sudo chmod 777 /dev/ttyUSB0`
-
-`python3 send_uart_data.py`
-
-  
-
-Depois volte para o terminal do Raspberry Pi e execute o comando abaixo.
-
-`cat /proc/pi-uart-data`
-
-Confira se o texto "Igor de Almeida" apareceu, se sim deu tudo certo.
-
+Usar pi-uart-client.
