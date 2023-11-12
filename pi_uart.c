@@ -237,6 +237,9 @@ static int __init my_init(void)
 	if (serdev_device_driver_register(&pi_uart_driver))
 	{
 		printk("pi_uart - could not load driver!\n");
+
+		mutex_destroy(&global_mutex);
+
 		return -1;
 	}
 
