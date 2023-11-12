@@ -146,7 +146,8 @@ static const struct serdev_device_ops pi_uart_ops = {
 	.receive_buf = receive_buf,
 };
 
-//----------------------------------------------------------------------------CONFIGURAÇÔES---------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------INICIALIZAÇÂO---------------------------------------------------------------------------------------------------------------------------
+// O código abaixo vai lidar apenas com a inicialização do arquivo proc e do serdev
 
 // Necessário declarar as funções do serdev antes de escreve-las
 
