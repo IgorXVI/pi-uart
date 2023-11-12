@@ -93,6 +93,8 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *receiv
 {
 	char received_char = (char)(*received_buffer);
 
+	printk("pi_uart - Received char %c\n", received_char);
+
 	mutex_lock(&global_mutex);
 
 	if (received_char == '~')
