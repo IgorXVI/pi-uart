@@ -146,15 +146,14 @@ static const struct serdev_device_ops pi_uart_ops = {
 	.receive_buf = receive_buf,
 };
 
-// CONFIGURAÇÔES ---------------------------------------------------------------------------------------------------------------------------
-// mexer aqui apenas para arrumar erros de ortografia nas mensagens de log ou nos comentários, o resto do código não deve ser alterado
+//----------------------------------------------------------------------------CONFIGURAÇÔES---------------------------------------------------------------------------------------------------------------------------
 
 // Necessário declarar as funções do serdev antes de escreve-las
 
 static int pi_uart_probe(struct serdev_device *serdev);
 static void pi_uart_remove(struct serdev_device *serdev);
 
-// atributo "compatible" deve ter o mesmo valor do que está no arquivo de overlay
+// atributo "compatible" deve ter o mesmo valor do que está no arquivo de overlay (dts)
 static struct of_device_id pi_uart_ids[] = {
 	{.compatible = "brightlight,echodev"},
 	// null entry no fim do array
@@ -176,17 +175,13 @@ static struct serdev_device_driver pi_uart_driver = {
 // Essa função vai ser chamada quando o serdev for registrado (na função my_init)
 static int pi_uart_probe(struct serdev_device *serdev)
 {
-	int status;
-
 	printk("pi_uart - now im in the probe function!\n");
 
 	// registra a operação de receber dados
 	serdev_device_set_client_ops(serdev, &pi_uart_ops);
 
 	// tenta inicializar o serdev
-	status = serdev_device_open(serdev);
-
-	if (status > 1)
+	if (serdev_device_open(serdev) > 1)
 	{
 		printk("pi_uart - error when opening the serial device!\n");
 
