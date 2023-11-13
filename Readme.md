@@ -50,7 +50,3 @@ Depois do reboot entre de novo no terminal.
   
 
 Confira se apareceu o aviso de que a função "probe" foi chamada, se sim deu tudo certo, se não, algo deu errado no processo de instalação.
-
-## Mandar dados por UART
-
-Usar pi-uart-client.
