@@ -28,7 +28,7 @@ static int proc_read_buffer_size = 0;
 
 static char proc_write_buffer[WRITE_BUFFER_MAX_SIZE];
 static int proc_write_buffer_size = 0;
-static struct serdev_device *global_serdev;
+static struct serdev_device *global_serdev = NULL;
 
 // quando o usuário tentar ler do arquivo proc, exemplo: "cat /proc/<PROC_FILE_NAME>",
 // essa função vai ser chamada, ela simplismente retorna todo
@@ -84,7 +84,10 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 		proc_write_buffer[WRITE_BUFFER_MAX_SIZE - 1] = '\0';
 	}
 
-	serdev_device_write_buf(global_serdev, proc_write_buffer, proc_write_buffer_size);
+	if (global_serdev != NULL)
+	{
+		serdev_device_write_buf(global_serdev, proc_write_buffer, proc_write_buffer_size);
+	}
 
 	mutex_unlock(&global_mutex);
 
