@@ -28,7 +28,7 @@ static int proc_read_buffer_size = 0;
 
 static char proc_write_buffer[WRITE_BUFFER_MAX_SIZE];
 static int proc_write_buffer_size = 0;
-static bool was_sent = false;
+static struct serdev_device *global_serdev;
 
 // quando o usuário tentar ler do arquivo proc, exemplo: "cat /proc/<PROC_FILE_NAME>",
 // essa função vai ser chamada, ela simplismente retorna todo
@@ -84,7 +84,7 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 		proc_write_buffer[WRITE_BUFFER_MAX_SIZE - 1] = '\0';
 	}
 
-	was_sent = false;
+	serdev_device_write_buf(global_serdev, proc_write_buffer, proc_write_buffer_size);
 
 	mutex_unlock(&global_mutex);
 
@@ -95,8 +95,6 @@ static ssize_t proc_write(struct file *file_pointer, const char *user_buffer, si
 static int receive_buf(struct serdev_device *serdev, const unsigned char *received_buffer, size_t number_of_bytes_received)
 {
 	char received_char = (char)(*received_buffer);
-
-	printk("pi_uart - Received char %c\n", received_char);
 
 	mutex_lock(&global_mutex);
 
@@ -112,18 +110,6 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *receiv
 	if (received_char == '^')
 	{
 		serdev_device_write_buf(serdev, proc_read_buffer, proc_read_buffer_size + 1);
-
-		goto RECEIVE_END;
-	}
-
-	if (received_char == '`')
-	{
-		if (was_sent == false)
-		{
-			was_sent = true;
-
-			serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
-		}
 
 		goto RECEIVE_END;
 	}
@@ -215,6 +201,12 @@ static int pi_uart_probe(struct serdev_device *serdev)
 
 	// determina que não tem bit de paridade
 	serdev_device_set_parity(serdev, SERDEV_PARITY_NONE);
+
+	mutex_lock(&global_mutex);
+
+	global_serdev = serdev;
+
+	mutex_unlock(&global_mutex);
 
 	return 0;
 }
