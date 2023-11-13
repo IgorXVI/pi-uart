@@ -116,11 +116,14 @@ static int receive_buf(struct serdev_device *serdev, const unsigned char *receiv
 		goto RECEIVE_END;
 	}
 
-	if (received_char == '`' && was_sent == false)
+	if (received_char == '`')
 	{
-		was_sent = true;
+		if (was_sent == false)
+		{
+			was_sent = true;
 
-		serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
+			serdev_device_write_buf(serdev, proc_write_buffer, proc_write_buffer_size);
+		}
 
 		goto RECEIVE_END;
 	}
